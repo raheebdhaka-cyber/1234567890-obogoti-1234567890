@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="bn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>নাগরিক সেবা ও অভিযোগ পোর্টাল</title>
+
+  <!-- Original Design System Tokens and Style -->
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="app.css">
+
+  <!-- Supabase JS Client (v2) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- jsPDF for direct PDF Generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+  <!-- Data and Helper Scripts -->
+  <script src="geoData.js"></script>
+  <script src="rolesData.js"></script>
+  <script src="i18n.js"></script>
+  <script src="pdfGenerator.js"></script>
+  <script src="automationEngine.js"></script>
+</head>
+
+<body oncontextmenu="return false;">
+  <div class="app-wrapper">
+    <!-- Top Header Navigation -->
+    <header class="header">
+      <a href="javascript:void(0)" onclick="navigateTo('home')" class="logo-link">
+        <img src="logo.png" alt="Bangladesh Govt Seal" class="logo-img">
+        <div style="margin-left: 12px; display: flex; flex-direction: column;">
+          <span style="font-weight: 700; font-size: 1.1rem; color: var(--primary-navy);"
+            data-i18n="govTitle">বাংলাদেশ</span>
+          <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 500;" data-i18n="siteTitle">নাগরিক সেবা
+            ও অভিযোগ পোর্টাল</span>
+        </div>
+      </a>
+
+      <!-- Dynamic Navigation Tabs based on Role -->
+      <nav class="nav-tabs" id="mainNavTabs" style="display: none;">
+        <button class="nav-tab-btn active" id="tabBtnHome" onclick="navigateTo('home')" data-i18n="home">হোম</button>
+        <button class="nav-tab-btn" id="tabBtnDashboard" onclick="navigateTo('dashboard')" style="display: none;"
+          data-i18n="dashboard">ড্যাশবোর্ড</button>
+        <button class="nav-tab-btn" id="tabBtnAccount" onclick="navigateTo('account')"
+          data-i18n="account">অ্যাকাউন্ট</button>
+      </nav>
+
+      <div class="header-actions">
+        <!-- Language Switcher Toggle -->
+        <div class="lang-toggle" onclick="toggleLanguage()" title="Switch Language / ভাষা পরিবর্তন">
+          <span class="lang-option active" id="langBn">বাংলা</span>
+          <span class="lang-option" id="langEn">ENG</span>
+        </div>
+
+        <!-- Auth Action Buttons -->
+        <div id="unauthHeaderActions" style="display: flex; gap: 0.6rem; align-items: center;">
+          <button class="account-btn" onclick="openModal('citizenLoginModal')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span data-i18n="signIn">লগইন</span>
+          </button>
+
+          <button class="btn btn-sm btn-primary" onclick="openRegisterPage()">
+            <span data-i18n="register">নাগরিক নিবন্ধন</span>
+          </button>
+
+          <button class="btn btn-sm btn-outline" onclick="openModal('adminLoginModal')" style="font-size: 0.8rem;">
+            <span data-i18n="adminLogin">অ্যাডমিন</span>
+          </button>
+        </div>
+
+        <div id="authHeaderActions" style="display: none; align-items: center; gap: 0.8rem;">
+          <span id="headerUserBadge" style="font-size: 0.88rem; font-weight: 600; color: var(--primary-navy);"></span>
+          <button class="btn btn-sm btn-danger" onclick="logoutSession()">
+            <span data-i18n="signOut">লগআউট</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+
+      <!-- ============================================================== -->
+      <!-- VIEW 1: HOME VIEW (Default & Citizen View) -->
+      <!-- ============================================================== -->
+      <section id="viewHome">
+        <!-- Welcome Greeting -->
+        <div class="welcome-heading">
+          <span id="welcomeText" data-i18n="welcomeGuest">স্বাগতম, নাগরিক সেবা পোর্টালে আপনাকে স্বাগতম</span>
+        </div>
+
+        <!-- Dashboard Action Cards 2-Column Grid -->
+        <div class="dashboard-grid">
+          <div class="action-cards">
+            <!-- Blue Card: Report Crime -->
+            <div class="action-card card-navy" onclick="handleReportCrimeClick()">
+              <div class="card-icon-wrap">
+                <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <div>
+                <h2 class="card-title" data-i18n="reportCrimeTitle">অপরাধ সংক্রান্ত অভিযোগ জানান</h2>
+                <p style="font-size: 0.85rem; opacity: 0.88; margin-top: 4px;" data-i18n="reportCrimeDesc">সরাসরি
+                  আইন-শৃঙ্খলা বাহিনী ও বিশেষ তদন্ত সেলে পাঠান</p>
+              </div>
+            </div>
+
+            <!-- Red Card: Report Problem -->
+            <div class="action-card card-crimson" onclick="handleReportProblemClick()">
+              <div class="card-icon-wrap">
+                <svg viewBox="0 0 24 24" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <line x1="12" y1="8" x2="12" y2="12"></line>
+                  <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                </svg>
+              </div>
+              <div>
+                <h2 class="card-title" data-i18n="reportProblemTitle">নাগরিক সমস্যা ও সেবা সংক্রান্ত অভিযোগ</h2>
+                <p style="font-size: 0.85rem; opacity: 0.88; margin-top: 4px;" data-i18n="reportProblemDesc">বিদ্যুৎ,
+                  গ্যাস, পানি ও নাগরিক অধিকার দপ্তর</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Central Visual Illustration Card (Right Column) with Status Bars -->
+          <div class="visual-card">
+            <!-- Watermark Emblem Symbol -->
+            <div class="visual-watermark-symbol">
+              <img src="logo.png" alt="Govt Emblem Watermark" class="visual-card-logo">
+            </div>
+
+            <!-- Default / Guest Info shown inside visual-card when not logged in -->
+            <div id="visualCardDefaultContent" class="visual-card-inner visual-card-guest">
+              <div class="visual-guest-badge">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+                <span data-i18n="siteTitle">নাগরিক সেবা ও অভিযোগ পোর্টাল</span>
+              </div>
+              <h3 style="color: var(--primary-navy); font-size: 1.15rem; margin: 0 0 0.4rem 0;" data-i18n="govTitle">
+                গণপ্রজাতন্ত্রী বাংলাদেশ</h3>
+              <p style="color: var(--text-muted); font-size: 0.88rem; line-height: 1.5; margin: 0;">
+                আপনার অভিযোগ ও আবেদন ট্র্যাকিং দেখতে আপনার অ্যাকাউন্টে লগইন করুন অথবা নতুন নাগরিক হিসেবে নিবন্ধন সম্পন্ন
+                করুন।
+              </p>
+            </div>
+
+            <!-- Report Status Bar (View box for logged-in citizen inside visual card) -->
+            <div id="citizenStatusBar" class="visual-card-inner status-bar-box" style="display: none;">
+              <div class="status-bar-header">
+                <div>
+                  <strong style="color: var(--primary-navy);" data-i18n="roleLabel">পদমর্যাদা / ভূমিকা:</strong>
+                  <span id="userCurrentRole" style="margin-left: 6px; font-weight: 600; color: #1e293b;">Civil
+                    Citizen</span>
+                </div>
+                <div id="pendingEditBadgeContainer"></div>
+              </div>
+              <div class="status-bar-body">
+                <span style="font-size: 0.88rem; font-weight: 600; color: var(--text-muted);"
+                  data-i18n="reportStatusBar">
+                  আপনার আবেদনের বর্তমান অবস্থা / নিষ্পত্তিকারী দপ্তর:
+                </span>
+                <div id="citizenReportList"
+                  style="margin-top: 0.5rem; display: flex; flex-direction: column; gap: 0.5rem; max-height: 250px; overflow-y: auto; padding-right: 4px;">
+                  <!-- Dynamic Report Statuses Render Here -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ============================================================== -->
+      <!-- VIEW 2: CITIZEN REGISTRATION PAGE (Personal Profile Section) -->
+      <!-- ============================================================== -->
+      <section id="viewRegister" class="content-card" style="display: none; max-width: 900px; margin: 0 auto;">
+        <h2 style="color: var(--primary-navy); margin-bottom: 0.5rem;" data-i18n="regTitle">নাগরিক প্রোফাইল নিবন্ধন ফরম
+        </h2>
+        <p style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 0.95rem;">
+          নিবন্ধনের প্রথম ধাপে আপনার ব্যক্তিগত প্রোফাইল (Personal Profile) সংক্রান্ত সঠিক তথ্য দিন। নিবন্ধন সম্পন্ন
+          হওয়ার পর অন্যান্য তথ্যাবলী সংরক্ষণ করা যাবে।
+        </p>
+
+        <form id="registrationForm" onsubmit="handleRegistrationSubmit(event)">
+          <div class="form-section-title" data-i18n="sec1Title">ব্যক্তিগত প্রোফাইল (Personal Profile)</div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="regFullName" data-i18n="fullName">পুরো নাম: *</label>
+              <input type="text" id="regFullName" class="form-control" placeholder="আপনার পূর্ণ নাম লিখুন" required>
+            </div>
+
+            <div class="form-group">
+              <label for="regPhone" data-i18n="phone">মোবাইল নম্বর: *</label>
+              <input type="tel" id="regPhone" class="form-control" placeholder="017xxxxxxxx" required>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="regFacePicture" data-i18n="facePicture">চেহারার ছবি (সর্বোচ্চ ১ মেগাবাইট): *</label>
+            <input type="file" id="regFacePicture" class="form-control" accept="image/*"
+              onchange="previewImageFile(event, 'regPhotoPreview')" required>
+            <div id="regPhotoPreview" style="margin-top: 10px; display: none;">
+              <img src="" alt="Photo Preview"
+                style="width: 100px; height: 110px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc;">
+            </div>
+          </div>
+
+          <div class="form-section-title" data-i18n="presentAddress">বর্তমান ঠিকানা (সংযুক্ত তালিকা থেকে নির্বাচন করুন)
+          </div>
+
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label for="regDivision" data-i18n="division">বিভাগ (Division): *</label>
+              <select id="regDivision" class="form-control" onchange="onDivisionChange('reg')" required>
+                <option value="">-- বিভাগ নির্বাচন করুন --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="regDistrict" data-i18n="district">জেলা (District): *</label>
+              <select id="regDistrict" class="form-control" onchange="onDistrictChange('reg')" required>
+                <option value="">-- জেলা নির্বাচন করুন --</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="regUpazila" data-i18n="upazila">উপজেলা / মেট্রো (Upazila): *</label>
+              <select id="regUpazila" class="form-control" onchange="onUpazilaChange('reg')" required>
+                <option value="">-- উপজেলা নির্বাচন করুন --</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="regAreaType" data-i18n="areaType">প্রশাসনিক ইউনিটের ধরন: *</label>
+              <select id="regAreaType" class="form-control" onchange="onAreaTypeChange('reg')" required>
+                <option value="">-- এলাকা নির্বাচন করুন --</option>
+              </select>
+            </div>
+
+            <div class="form-group" id="regWardUnionGroup">
+              <label for="regWardUnion" id="regWardUnionLabel" data-i18n="unionWard">ইউনিয়ন / ওয়ার্ড: *</label>
+              <!-- Will switch between select or input if city corp -->
+              <div id="regWardUnionContainer">
+                <select id="regWardUnion" class="form-control" required>
+                  <option value="">-- ইউনিয়ন বা ওয়ার্ড নির্বাচন করুন --</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label for="regHouseRoad" data-i18n="houseRoad">বাড়ি / রোড নম্বর: *</label>
+            <input type="text" id="regHouseRoad" class="form-control" placeholder="বাড়ি নং, রোড বা পাড়ার বিবরণ লিখুন"
+              required>
+          </div>
+
+          <div class="form-section-title" data-i18n="primaryIdPrompt">প্রাথমিক পরিচয়পত্র নির্বাচন করুন (যেকোনো একটি)
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label>পরিচয়পত্রের ধরন: *</label>
+              <select id="regPrimaryIdType" class="form-control" required>
+                <option value="birth_certificate">জন্ম নিবন্ধন নম্বর (Birth Certificate Number)</option>
+                <option value="nid" selected>জাতীয় পরিচয়পত্র (NID)</option>
+                <option value="passport">পাসপোর্ট নম্বর (Passport Number)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="regPrimaryIdNumber" data-i18n="enterIdNum">নির্বাচিত পরিচয়পত্রের নম্বর লিখুন: *</label>
+              <input type="text" id="regPrimaryIdNumber" class="form-control" placeholder="পরিচয়পত্র নম্বর লিখুন"
+                required>
+            </div>
+          </div>
+
+          <div style="margin-top: 1.5rem; display: flex; gap: 1rem; align-items: center;">
+            <button type="submit" class="btn btn-success" data-i18n="completeRegBtn">নিবন্ধন সম্পন্ন করুন</button>
+            <button type="button" class="btn btn-outline" onclick="navigateTo('home')">বাতিল</button>
+            <span style="font-size: 0.9rem; color: var(--text-muted); margin-left: auto;">
+              <span data-i18n="alreadyRegistered">ইতিমধ্যে অ্যাকাউন্ট আছে?</span>
+              <a href="javascript:void(0)" onclick="openModal('citizenLoginModal')"
+                style="color: var(--primary-navy); font-weight: 700;" data-i18n="signInHere">এখানে লগইন করুন</a>
+            </span>
+          </div>
+        </form>
+      </section>
+
+
+      <!-- ============================================================== -->
+      <!-- VIEW 3: CITIZEN ACCOUNT MANAGEMENT (Section 2 & 3) -->
+      <!-- ============================================================== -->
+      <section id="viewAccount" class="content-card" style="display: none; max-width: 900px; margin: 0 auto;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+          <h2 style="color: var(--primary-navy);" data-i18n="accountTitle">নাগরিক তথ্য ও প্রোফাইল ব্যবস্থাপনা</h2>
+          <span id="accountStatusBadge" class="status-pill pending">Pending Approval</span>
+        </div>
+
+        <div id="accountEditPendingNotice" class="alert-notice alert-warning" style="display: none;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+          <span data-i18n="pendingEditNotice">আপনার প্রোফাইল সম্পাদনার অনুরোধটি বর্তমানে অ্যাডমিনের অনুমোদনের অপেক্ষায়
+            রয়েছে।</span>
+        </div>
+
+        <div class="alert-notice alert-info">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <span data-i18n="primaryIdFixedNotice">প্রাথমিক পরিচয়পত্র নম্বর স্থায়ী ও অপরিবর্তনযোগ্য। অন্যান্য ফিল্ড
+            পরিবর্তন করলে অ্যাডমিনের অনুমোদন সাপেক্ষে কার্যকর হবে।</span>
+        </div>
+
+        <form id="accountForm" onsubmit="handleAccountEditSubmit(event)">
+          <!-- Personal Profile Review -->
+          <div class="form-section-title" data-i18n="sec1Title">ব্যক্তিগত প্রোফাইল (Personal Profile)</div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label data-i18n="fullName">পুরো নাম:</label>
+              <input type="text" id="accFullName" class="form-control" required>
+            </div>
+            <div class="form-group">
+              <label data-i18n="phone">ফোন নম্বর:</label>
+              <input type="tel" id="accPhone" class="form-control" required>
+            </div>
+          </div>
+
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label data-i18n="division">বিভাগ:</label>
+              <select id="accDivision" class="form-control" onchange="onDivisionChange('acc')" required></select>
+            </div>
+            <div class="form-group">
+              <label data-i18n="district">জেলা:</label>
+              <select id="accDistrict" class="form-control" onchange="onDistrictChange('acc')" required></select>
+            </div>
+            <div class="form-group">
+              <label data-i18n="upazila">উপজেলা / মেট্রো:</label>
+              <select id="accUpazila" class="form-control" onchange="onUpazilaChange('acc')" required></select>
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label data-i18n="areaType">প্রশাসনিক ইউনিট:</label>
+              <select id="accAreaType" class="form-control" onchange="onAreaTypeChange('acc')" required></select>
+            </div>
+            <div class="form-group">
+              <label data-i18n="unionWard">ইউনিয়ন / ওয়ার্ড:</label>
+              <div id="accWardUnionContainer">
+                <select id="accWardUnion" class="form-control" required></select>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label data-i18n="houseRoad">বাড়ি / রোড:</label>
+            <input type="text" id="accHouseRoad" class="form-control" required>
+          </div>
+
+          <!-- Section 2: Other Identity & Contact -->
+          <div class="form-section-title" data-i18n="sec2Title">সেকশন ২: অন্যান্য পরিচয়পত্র ও যোগাযোগ</div>
+
+          <div class="form-grid-3">
+            <div class="form-group">
+              <label data-i18n="birthCert">জন্ম নিবন্ধন নম্বর:</label>
+              <input type="text" id="accBirthCert" class="form-control" placeholder="জন্ম সনদ নম্বর">
+            </div>
+            <div class="form-group">
+              <label data-i18n="nid">জাতীয় পরিচয়পত্র (NID):</label>
+              <input type="text" id="accNid" class="form-control" placeholder="জাতীয় পরিচয়পত্র নম্বর">
+            </div>
+            <div class="form-group">
+              <label data-i18n="passport">পাসপোর্ট নম্বর:</label>
+              <input type="text" id="accPassport" class="form-control" placeholder="পাসপোর্ট নম্বর">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label data-i18n="email">ব্যবহারকারীর ইমেইল:</label>
+              <input type="email" id="accEmail" class="form-control" placeholder="citizen@example.com">
+            </div>
+            <div class="form-group">
+              <label data-i18n="updatePhoto">নতুন ছবি সংযুক্ত করুন (যদি পরিবর্তন করতে চান):</label>
+              <input type="file" id="accFacePicture" class="form-control" accept="image/*"
+                onchange="previewImageFile(event, 'accPhotoPreview')">
+              <div id="accPhotoPreview" style="margin-top: 10px;">
+                <img id="accCurrentPhotoImg" src="" alt="Current Citizen Photo"
+                  style="width: 100px; height: 110px; object-fit: cover; border-radius: 6px; border: 1px solid #ccc; display: none;">
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 3: Parents' Information -->
+          <div class="form-section-title" data-i18n="sec3Title">সেকশন ৩: পিতা ও মাতার তথ্যাবলী</div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label data-i18n="fatherName">পিতার নাম:</label>
+              <input type="text" id="accFatherName" class="form-control">
+            </div>
+            <div class="form-group">
+              <label data-i18n="fatherBirthCert">পিতার জন্ম নিবন্ধন নম্বর:</label>
+              <input type="text" id="accFatherBirthCert" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label data-i18n="fatherNid">পিতার জাতীয় পরিচয়পত্র (NID):</label>
+              <input type="text" id="accFatherNid" class="form-control">
+            </div>
+            <div class="form-group">
+              <label data-i18n="fatherPassport">পিতার পাসপোর্ট নম্বর:</label>
+              <input type="text" id="accFatherPassport" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-grid-2" style="margin-top: 1rem;">
+            <div class="form-group">
+              <label data-i18n="motherName">মাতার নাম:</label>
+              <input type="text" id="accMotherName" class="form-control">
+            </div>
+            <div class="form-group">
+              <label data-i18n="motherBirthCert">মাতার জন্ম নিবন্ধন নম্বর:</label>
+              <input type="text" id="accMotherBirthCert" class="form-control">
+            </div>
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label data-i18n="motherNid">মাতার জাতীয় পরিচয়পত্র (NID):</label>
+              <input type="text" id="accMotherNid" class="form-control">
+            </div>
+            <div class="form-group">
+              <label data-i18n="motherPassport">মাতার পাসপোর্ট নম্বর:</label>
+              <input type="text" id="accMotherPassport" class="form-control">
+            </div>
+          </div>
+
+          <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary" data-i18n="saveEditsBtn">পরিবর্তন সংরক্ষণ করুন (অনুমোদনের জন্য
+              পাঠান)</button>
+            <button type="button" class="btn btn-outline" onclick="downloadCurrentProfilePdf()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              ডাউনলোড প্রোফাইল PDF
+            </button>
+          </div>
+        </form>
+      </section>
+
+
+      <!-- ============================================================== -->
+      <!-- VIEW 4: SPECIAL USER DASHBOARD (Special User View) -->
+      <!-- ============================================================== -->
+      <section id="viewDashboard" class="content-card" style="display: none;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+          <div>
+            <h2 style="color: var(--primary-navy);" data-i18n="specialUserDashboard">বিশেষ ব্যবহারকারী ড্যাশবোর্ড</h2>
+            <p style="color: var(--text-muted); font-size: 0.95rem;">
+              <strong data-i18n="roleLabel">দায়িত্বপ্রাপ্ত ভূমিকা:</strong> <span id="specialUserRoleName"
+                style="color: var(--secondary-crimson); font-weight: 700;"></span>
+            </p>
+          </div>
+          <button class="btn btn-outline btn-sm" onclick="fetchSpecialUserTasks()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+            </svg>
+            রিফ্রেশ টাস্ক তালিকা
+          </button>
+        </div>
+
+        <div class="data-table-wrapper">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th data-i18n="trackingId">ট্র্যাকিং আইডি</th>
+                <th>তারিখ</th>
+                <th data-i18n="complainant">অভিযোগকারী</th>
+                <th data-i18n="category">বিষয় / শ্রেণি</th>
+                <th>বিবরণ</th>
+                <th data-i18n="status">অবস্থা</th>
+                <th data-i18n="action">পদক্ষেপ</th>
+              </tr>
+            </thead>
+            <tbody id="specialUserTasksBody">
+              <!-- Tasks will be populated here -->
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+
+      <!-- ============================================================== -->
+      <!-- VIEW 5: ADMIN DASHBOARD (Central Control) -->
+      <!-- ============================================================== -->
+      <section id="viewAdminDashboard" class="content-card" style="display: none;">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 1rem;">
+          <div>
+            <h2 style="color: var(--primary-navy);" data-i18n="adminDashboardTitle">বাংলাদেশ - সেন্ট্রাল অ্যাডমিন
+              কন্ট্রোল ড্যাশবোর্ড</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">
+              প্রশাসনিক পর্যবেক্ষণ, নতুন নাগরিক প্রোফাইল অনুমোদন, ভূমিকা নির্ধারণ ও অভিযোগ ফরোয়ার্ডিং কন্ট্রোল |
+              Authenticated Admin: <span id="adminCurrentEmailDisplay"
+                style="font-weight:700; color:var(--primary-navy);"></span>
+            </p>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="logoutAdmin()">লগআউট অ্যাডমিন</button>
+        </div>
+
+        <!-- Tab Switcher inside Admin -->
+        <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem; border-bottom: 1px solid #cbd5e1;">
+          <button class="nav-tab-btn active" id="adminTabBtn1" onclick="switchAdminSubTab(1)"
+            data-i18n="adminPendingApprovals">নাগরিক নিবন্ধন অনুমোদন ও ভূমিকা অর্পণ</button>
+          <button class="nav-tab-btn" id="adminTabBtn2" onclick="switchAdminSubTab(2)"
+            data-i18n="adminPendingEdits">প্রোফাইল সম্পাদনা অনুমোদন</button>
+          <button class="nav-tab-btn" id="adminTabBtn3" onclick="switchAdminSubTab(3)"
+            data-i18n="adminReportsForwarding">অভিযোগ ফরোয়ার্ডিং ও ব্যবস্থাপনা</button>
+        </div>
+
+        <!-- Admin Sub Tab 1: Pending Citizen Registrations -->
+        <div id="adminSubTab1">
+          <h3 style="margin-bottom: 1rem; color: #1e293b;">অনুমোদনের অপেক্ষায় থাকা নাগরিক নিবন্ধন তালিকা</h3>
+          <div class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>তারিখ</th>
+                  <th>নাগরিকের নাম</th>
+                  <th>ফোন নম্বর</th>
+                  <th>পরিচয়পত্র নম্বর</th>
+                  <th>ঠিকানা</th>
+                  <th>পদক্ষেপ</th>
+                </tr>
+              </thead>
+              <tbody id="adminPendingCitizenBody">
+                <!-- Dynamically loaded -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Admin Sub Tab 2: Pending Profile Edits -->
+        <div id="adminSubTab2" style="display: none;">
+          <h3 style="margin-bottom: 1rem; color: #1e293b;">নাগরিক প্রোফাইল সম্পাদনার অনুমোদন তালিকা</h3>
+          <div class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>নাগরিকের নাম</th>
+                  <th>আইডি নম্বর</th>
+                  <th>প্রস্তাবিত পরিবর্তনসমূহ</th>
+                  <th>পদক্ষেপ</th>
+                </tr>
+              </thead>
+              <tbody id="adminPendingEditsBody">
+                <!-- Dynamically loaded -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Admin Sub Tab 3: Dispatch & Forward Reports -->
+        <div id="adminSubTab3" style="display: none;">
+          <h3 style="margin-bottom: 1rem; color: #1e293b;">নাগরিক অভিযোগ ফরোয়ার্ডিং ও ভূমিকা হস্তান্তর</h3>
+          <div class="data-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ট্র্যাকিং আইডি</th>
+                  <th>অভিযোগকারী</th>
+                  <th>ধরন / শ্রেণি</th>
+                  <th>বিবরণ</th>
+                  <th>বর্তমান ভূমিকা</th>
+                  <th>অবস্থা</th>
+                  <th>ভূমিকা ফরোয়ার্ড করুন</th>
+                </tr>
+              </thead>
+              <tbody id="adminReportsDispatchBody">
+                <!-- Dynamically loaded -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Emergency Hotline Bottom Bar -->
+    <footer class="hotline-bar">
+      <div class="hotline-item">
+        <span class="hotline-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path
+              d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z">
+            </path>
+          </svg>
+        </span>
+        <span class="hotline-number">999</span>
+        <span class="hotline-name" data-i18n="hotline999">জাতীয় জরুরি সেবা</span>
+      </div>
+
+      <div class="hotline-item">
+        <span class="hotline-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </span>
+        <span class="hotline-number">109</span>
+        <span class="hotline-name" data-i18n="hotline109">নারী ও শিশু নির্যাতন প্রতিরোধ</span>
+      </div>
+
+      <div class="hotline-item">
+        <span class="hotline-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+        </span>
+        <span class="hotline-number">333</span>
+        <span class="hotline-name" data-i18n="hotline333">জাতীয় তথ্য ও সেবা</span>
+      </div>
+
+      <div class="hotline-item">
+        <span class="hotline-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+          </svg>
+        </span>
+        <span class="hotline-number">106</span>
+        <span class="hotline-name" data-i18n="hotline106">দুদক অভিযোগ কেন্দ্র</span>
+      </div>
+    </footer>
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- MODAL: CITIZEN SIGN IN -->
+  <!-- ============================================================== -->
+  <div class="modal-overlay" id="citizenLoginModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="citizenLoginTitle">নাগরিক লগইন</h3>
+        <button class="modal-close-btn" onclick="closeModal('citizenLoginModal')">&times;</button>
+      </div>
+      <form id="citizenLoginForm" onsubmit="handleCitizenLogin(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="loginIdNumber" data-i18n="idNoLabel">আইডি নম্বর (ID No): *</label>
+            <input type="text" id="loginIdNumber" class="form-control"
+              placeholder="নিবন্ধিত এনআইডি / জন্ম সনদ / পাসপোর্ট নম্বর" required>
+          </div>
+          <div class="form-group">
+            <label for="loginPassword" data-i18n="phonePassLabel">পাসওয়ার্ড (নিবন্ধিত ফোন নম্বর): *</label>
+            <input type="password" id="loginPassword" class="form-control" placeholder="আপনার নিবন্ধিত মোবাইল নম্বর দিন"
+              required>
+          </div>
+        </div>
+        <div class="modal-footer" style="justify-content: space-between;">
+          <span style="font-size: 0.85rem; color: var(--text-muted);">
+            <span data-i18n="dontHaveAccount">অ্যাকাউন্ট নেই?</span>
+            <a href="javascript:void(0)" onclick="closeModal('citizenLoginModal'); openRegisterPage();"
+              style="color: var(--primary-navy); font-weight: 700;" data-i18n="registerNow">নতুন নিবন্ধন করুন</a>
+          </span>
+          <div>
+            <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('citizenLoginModal')"
+              data-i18n="close">বন্ধ করুন</button>
+            <button type="submit" class="btn btn-primary btn-sm" data-i18n="loginBtn">প্রবেশ করুন</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- MODAL: ADMIN LOGIN -->
+  <!-- ============================================================== -->
+  <div class="modal-overlay" id="adminLoginModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="adminLoginTitle">প্রশাসনিক কন্ট্রোল প্যানেল লগইন</h3>
+        <button class="modal-close-btn" onclick="closeModal('adminLoginModal')">&times;</button>
+      </div>
+      <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+        <div class="modal-body">
+          <div class="alert-notice alert-info" style="font-size:0.82rem; margin-bottom:1rem;">
+            <span>Supabase Authentication Enabled: Only users registered in your Supabase Auth project can sign in as
+              administrators.</span>
+          </div>
+          <div class="form-group">
+            <label for="adminEmail" data-i18n="adminEmailLabel">অ্যাডমিন ইমেইল: *</label>
+            <input type="email" id="adminEmail" class="form-control" placeholder="admin@bangladesh.gov.bd" required>
+          </div>
+          <div class="form-group">
+            <label for="adminPassword" data-i18n="adminPassLabel">অ্যাডমিন পাসওয়ার্ড: *</label>
+            <input type="password" id="adminPassword" class="form-control" placeholder="আপনার Supabase পাসওয়ার্ড দিন"
+              required>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline btn-sm" onclick="closeModal('adminLoginModal')"
+            data-i18n="close">বন্ধ করুন</button>
+          <button type="submit" class="btn btn-danger btn-sm" data-i18n="loginBtn">অ্যাডমিন লগইন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- MODAL: REPORT CRIME -->
+  <!-- ============================================================== -->
+  <div class="modal-overlay" id="reportCrimeModal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3 data-i18n="crimeReportTitle">অপরাধ সংক্রান্ত অভিযোগ দাখিল</h3>
+        <button class="modal-close-btn" onclick="closeModal('reportCrimeModal')">&times;</button>
+      </div>
+      <form id="crimeReportForm" onsubmit="handleCrimeReportSubmit(event)">
+        <div class="modal-body">
+          <div class="alert-notice alert-info">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span data-i18n="spAutoNotice">লক্ষ্য করুন: গুরুতর ও সংবেদনশীল অপরাধ সরাসরি 'অতিরিক্ত পুলিশ কমিশনার / পুলিশ
+              সুপার (SP)' এর কার্যালয়ে পাঠানো হবে।</span>
+          </div>
+
+          <div class="form-group">
+            <label for="crimeCategorySelect" data-i18n="selectCrimeCategory">অপরাধের ধরণ নির্বাচন করুন: *</label>
+            <select id="crimeCategorySelect" class="form-control" required></select>
+          </div>
+
+          <div class="form-group">
+            <label for="crimeDescription" data-i18n="problemDetailsLabel">অভিযোগের বিস্তারিত বিবরণ (Long-Text):
+              *</label>
+            <textarea id="crimeDescription" class="form-control" rows="5"
+              placeholder="ঘটনাস্থল, সময়, সংশ্লিষ্ট ব্যক্তিদের নাম এবং ঘটনার পুঙ্খানুপুঙ্খ বিবরণ লিখুন..."
+              required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('reportCrimeModal')"
+            data-i18n="close">বাতিল</button>
+          <button type="submit" class="btn btn-danger" data-i18n="submitReportBtn">অভিযোগ জমা দিন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- MODAL: REPORT PROBLEM (Utility & Rights) -->
+  <!-- ============================================================== -->
+  <div class="modal-overlay" id="reportProblemModal">
+    <div class="modal-content modal-lg">
+      <div class="modal-header">
+        <h3 data-i18n="problemReportTitle">নাগরিক সমস্যা ও পরিষেবা অভিযোগ</h3>
+        <button class="modal-close-btn" onclick="closeModal('reportProblemModal')">&times;</button>
+      </div>
+      <form id="problemReportForm" onsubmit="handleProblemReportSubmit(event)">
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="problemCategorySelect" data-i18n="selectProblemCategory">সেবা খাত নির্বাচন করুন: *</label>
+            <select id="problemCategorySelect" class="form-control" required></select>
+          </div>
+
+          <div class="form-group">
+            <label for="problemDescription" data-i18n="problemDetailsLabel">সমস্যার বিস্তারিত বিবরণ (Long-Text):
+              *</label>
+            <textarea id="problemDescription" class="form-control" rows="5"
+              placeholder="সমস্যার বিবরণ, এলাকা, মিটার/গ্রাহক নং ও বিস্তারিত সমস্যা লিখুন..." required></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('reportProblemModal')"
+            data-i18n="close">বাতিল</button>
+          <button type="submit" class="btn btn-danger" data-i18n="submitReportBtn">অভিযোগ জমা দিন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- MODAL: ADMIN ASSIGN ROLE & APPROVE -->
+  <!-- ============================================================== -->
+  <div class="modal-overlay" id="adminAssignRoleModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="approveAndAssignRole">অনুমোদন ও পদবী নির্ধারণ</h3>
+        <button class="modal-close-btn" onclick="closeModal('adminAssignRoleModal')">&times;</button>
+      </div>
+      <form id="adminAssignRoleForm" onsubmit="handleAdminRoleAssignmentSubmit(event)">
+        <div class="modal-body">
+          <input type="hidden" id="adminTargetCitizenId">
+          <p style="margin-bottom: 1rem; font-size: 0.95rem;">
+            আবেদনকারী: <strong id="adminTargetCitizenName" style="color: var(--primary-navy);"></strong>
+          </p>
+
+          <div class="form-group">
+            <label>ব্যবহারকারীর ধরন (Account Type): *</label>
+            <select id="adminAccountTypeSelect" class="form-control" onchange="onAdminAccountTypeChange()" required>
+              <option value="Civil Citizen">Civil Citizen (সাধারণ নাগরিক)</option>
+              <option value="Special User">Special User (বিশেষ কর্মকর্তা)</option>
+            </select>
+          </div>
+
+          <div class="form-group" id="adminSpecialRoleGroup" style="display: none;">
+            <label data-i18n="selectRoleToAssign">নির্দিষ্ট ভূমিকা / পদবী নির্বাচন করুন: *</label>
+            <select id="adminSpecialRoleSelect" class="form-control"></select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('adminAssignRoleModal')"
+            data-i18n="close">বাতিল</button>
+          <button type="submit" class="btn btn-success">অনুমোদন করুন ও PDF জেনারেট করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  <!-- ============================================================== -->
+  <!-- MODAL: ADMIN FORWARD REPORT TO SPECIFIC ROLE -->
+  <!-- ============================================================== -->
+  <div class="modal-overlay" id="adminForwardReportModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 data-i18n="forwardToRole">নির্দিষ্ট কর্মকর্তার কাছে ফরোয়ার্ড করুন</h3>
+        <button class="modal-close-btn" onclick="closeModal('adminForwardReportModal')">&times;</button>
+      </div>
+      <form id="adminForwardReportForm" onsubmit="handleAdminForwardReportSubmit(event)">
+        <div class="modal-body">
+          <input type="hidden" id="adminForwardReportId">
+          <p style="margin-bottom: 0.5rem; font-size: 0.92rem;">
+            ট্র্যাকিং আইডি: <strong id="adminForwardTrackingId" style="color: var(--secondary-crimson);"></strong>
+          </p>
+          <p style="margin-bottom: 1rem; font-size: 0.92rem;">
+            <span data-i18n="currentAssigned">বর্তমান প্রাপক:</span> <strong id="adminForwardCurrentRole"
+              style="color: var(--primary-navy);"></strong>
+          </p>
+
+          <div class="form-group">
+            <label>নতুন প্রাপক ভূমিকা / কর্মকর্তা নির্বাচন করুন: *</label>
+            <select id="adminForwardNewRoleSelect" class="form-control" required></select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" onclick="closeModal('adminForwardReportModal')"
+            data-i18n="close">বাতিল</button>
+          <button type="submit" class="btn btn-primary" data-i18n="forwardBtn">ফরোয়ার্ড করুন</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Draggable Floating Chatbot Bubble -->
+  <div id="draggableChatbotBubble" class="floating-chatbot-bubble" title="চ্যাটবট / Chatbot">
+    <a href="https://obogotibd.vercel.app" target="_blank" rel="noopener noreferrer" class="bubble-link"
+      id="chatbotBubbleLink">
+      <img src="chatbot-bubble.png" alt="Chatbot" class="bubble-img" draggable="false">
+    </a>
+  </div>
+
+  <!-- Main Application Orchestrator Script -->
+  <script src="app.js"></script>
+</body>
+
+</html>

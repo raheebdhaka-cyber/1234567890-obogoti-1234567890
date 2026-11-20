@@ -1,0 +1,510 @@
+/* ==========================================================================
+   Design System & Tokens
+   ========================================================================== */
+@import url('https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+  /* Colors */
+  --bg-color: #cbcfd4;
+  /* Matches exact gray tone of the skyline sky */
+  --bg-header: #ffffff;
+  /* Clean white header */
+  --bg-footer: #ffffff;
+  /* Clean white emergency hotline bar */
+  --text-primary: #1f2937;
+  /* Main dark slate typography */
+  --text-muted: #52606d;
+  /* Secondary gray typography */
+  --text-light: #ffffff;
+  /* Contrast white text */
+
+  /* Brand / Action Colors */
+  --primary-navy: #0e1647;
+  /* Deep navy blue button fill */
+  --primary-navy-hover: #172266;
+  --secondary-crimson: #8f2127;
+  /* Burgundy / crimson red button fill */
+  --secondary-crimson-hover: #a8272e;
+
+  --brand-green: #0b6b47;
+  /* Logo / Active toggle green */
+  --accent-red: #8f2127;
+  /* Logo inner dot / Account button stroke */
+
+  --border-card-white: #ffffff;
+  /* Solid white border around main action buttons */
+  --border-slate: #cbd2d9;
+  /* Subtle slate borders */
+  --border-panel: #2b3543;
+  /* Dark outline border of right visual card */
+
+  /* Chatbot Widget */
+  --chatbot-bg: #634343;
+  /* Circular floating bot badge color */
+
+  /* Typography */
+  --font-bangla: 'Hind Siliguri', 'Noto Sans Bengali', sans-serif;
+  --font-latin: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.05);
+  --shadow-card: 0 6px 18px rgba(0, 0, 0, 0.22);
+}
+
+/* ==========================================================================
+   Base & Global Background Setup
+   ========================================================================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 100%;
+  min-height: 100vh;
+  font-family: var(--font-bangla);
+  color: var(--text-primary);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 
+   Device-Adaptive Full Background Setup:
+   - Fits its VERTICAL size (height) 100% to the user device viewport (100vh)
+   - Anchored at bottom center with fixed attachment
+*/
+body {
+  background-color: var(--bg-color);
+  background-image: url('bg-skyline.jpg');
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  background-size: auto 100vh;
+  background-attachment: fixed;
+}
+
+.app-wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  position: relative;
+}
+
+/* ==========================================================================
+   Header Navbar
+   ========================================================================== */
+.header {
+  background-color: var(--bg-header);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  padding: 0.6rem 2.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logo-img {
+  height: 52px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+}
+
+/* Language Toggle Switch */
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  background-color: #ffffff;
+  border: 1.5px solid #2b3543;
+  border-radius: 9999px;
+  padding: 2px 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.lang-option {
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+  border-radius: 9999px;
+  color: #333333;
+  transition: all 0.2s ease;
+}
+
+.lang-option.active {
+  background-color: var(--brand-green);
+  color: #ffffff;
+}
+
+/* Account Pill Button */
+.account-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.35rem 1.1rem;
+  border: 1.5px solid var(--secondary-crimson);
+  border-radius: 9999px;
+  background-color: #ffffff;
+  color: #2b3543;
+  font-size: 0.88rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.account-btn:hover {
+  background-color: #fdf5f5;
+  border-color: var(--secondary-crimson-hover);
+}
+
+.account-btn svg {
+  color: var(--secondary-crimson);
+  stroke: var(--secondary-crimson);
+}
+
+/* ==========================================================================
+   Main Content Area
+   ========================================================================== */
+.main-content {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2.5rem 2.5rem 3.5rem 2.5rem;
+  max-width: 1380px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* Welcome Greeting */
+.welcome-heading {
+  font-size: 1.85rem;
+  font-weight: 600;
+  color: #4b5869;
+  margin-bottom: 2rem;
+  position: relative;
+  z-index: 2;
+}
+
+.welcome-heading .user-tag {
+  color: #4b5869;
+  font-weight: 500;
+}
+
+/* Dashboard 2-Column Grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2.5rem;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+}
+
+/* ==========================================================================
+   Primary Action Cards (Left Column)
+   ========================================================================== */
+.action-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.action-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 1.4rem 2rem;
+  border-radius: 8px;
+  color: var(--text-light);
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+  outline: 3.5px solid var(--border-card-white);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+  overflow: hidden;
+}
+
+.action-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.06);
+}
+
+.action-card:active {
+  transform: translateY(0);
+}
+
+/* Blue Card: Crime Report */
+.action-card.card-navy {
+  background-color: var(--primary-navy);
+}
+
+/* Red Card: Local Issues Report */
+.action-card.card-crimson {
+  background-color: var(--secondary-crimson);
+}
+
+.action-card .card-icon-wrap {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 1.5rem;
+}
+
+.action-card .card-icon-wrap svg {
+  width: 100%;
+  height: 100%;
+  stroke: #ffffff;
+  fill: none;
+}
+
+.action-card .card-title {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.3px;
+  line-height: 1.25;
+}
+
+/* ==========================================================================
+   Central Visual Illustration Card (Right Column)
+   ========================================================================== */
+.visual-card {
+  background-color: #ffffff;
+  border: 3.5px solid var(--border-panel);
+  border-radius: 12px;
+  min-height: 340px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.12);
+  position: relative;
+  overflow: hidden;
+}
+
+.visual-watermark-symbol {
+  width: 100%;
+  max-width: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.visual-card-logo {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  opacity: 0.18;
+  filter: grayscale(100%);
+  transition: opacity 0.3s ease;
+}
+
+.visual-card:hover .visual-card-logo {
+  opacity: 0.28;
+}
+
+/* ==========================================================================
+   Chatbot Floating Trigger (Top Right / Content Area)
+   ========================================================================== */
+.chatbot-trigger {
+  position: absolute;
+  top: 1.75rem;
+  right: 2.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  z-index: 20;
+}
+
+.chatbot-circle {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background-color: var(--chatbot-bg);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chatbot-trigger:hover .chatbot-circle {
+  transform: scale(1.08);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.32);
+}
+
+.chatbot-circle svg {
+  width: 32px;
+  height: 32px;
+  fill: #ffffff;
+}
+
+.chatbot-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #3b3131;
+}
+
+/* ==========================================================================
+   Emergency Hotlines Bottom Bar
+   ========================================================================== */
+.hotline-bar {
+  background-color: var(--bg-footer);
+  border-top: 1px solid #d8dee4;
+  border-radius: 20px 20px 0 0;
+  box-shadow: 0 -3px 12px rgba(0, 0, 0, 0.06);
+  padding: 0.85rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1380px;
+  margin: 0 auto;
+}
+
+.hotline-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+  position: relative;
+  padding: 0.25rem 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.hotline-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 15%;
+  height: 70%;
+  width: 1px;
+  background-color: #d1d5db;
+}
+
+.hotline-icon {
+  color: #1f2937;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 0.2rem;
+}
+
+.hotline-number {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: #111827;
+  line-height: 1.2;
+}
+
+.hotline-name {
+  font-size: 0.78rem;
+  color: #374151;
+  font-weight: 600;
+  margin-top: 0.15rem;
+}
+
+/* ==========================================================================
+   Responsive Adaptations Across Devices (Phones, Tablets, Desktops, Ultrawide)
+   ========================================================================== */
+
+/* Maintain vertical fit (100vh) across all aspect ratios */
+@media (max-width: 992px) {
+  body {
+    background-size: auto 100vh;
+    background-position: center bottom;
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  .visual-card {
+    min-height: 260px;
+  }
+
+  .hotline-bar {
+    flex-wrap: wrap;
+    gap: 1rem 0;
+  }
+
+  .hotline-item {
+    flex: 0 0 33.333%;
+  }
+
+  .hotline-item:nth-child(3)::after {
+    display: none;
+  }
+}
+
+/* Mobile phones */
+@media (max-width: 640px) {
+  body {
+    /* Keep vertical fit to viewport height, centered on key landmarks */
+    background-size: auto 100vh;
+    background-position: 45% bottom;
+  }
+
+  .header {
+    padding: 0.6rem 1rem;
+  }
+
+  .logo-img {
+    height: 40px;
+  }
+
+  .main-content {
+    padding: 1.5rem 1rem 2.5rem 1rem;
+  }
+
+  .action-card .card-title {
+    font-size: 1.25rem;
+  }
+
+  .chatbot-trigger {
+    top: 1rem;
+    right: 1rem;
+  }
+
+  .hotline-item {
+    flex: 0 0 50%;
+  }
+
+  .hotline-item::after {
+    display: none;
+  }
+}
